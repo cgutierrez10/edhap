@@ -29,6 +29,7 @@ namespace edhap
                     // In case db does not have a table, it will be created here
                     AcctTable = new DataTable("accounts");
                     DataColumn acctId = DBase.newCol("acctId","Int64");
+                    acctId.DefaultValue = null;
                     acctId.AutoIncrement = true;
                     AcctTable.Columns.Add(acctId);
                     DataColumn[] AcctPrimKey = { acctId } ;
@@ -38,7 +39,7 @@ namespace edhap
                     AcctTable.Columns.Add(DBase.newCol("Tracking","Boolean"));
                     AcctTable.Columns.Add(DBase.newCol("Balance","Double"));
                     AcctTable.Columns.Add(DBase.newCol("WorkingBal","Double"));
-                    AcctTable.Columns.Add(DBase.newCol("parent","Int64")); // Ties to another 'account' type object.
+                    AcctTable.Columns.Add(DBase.newCol("parent","Int64")); // Ties to an acctgrptbl row
                     AcctTable.Columns.Add(DBase.newCol("Comment","String"));
                     AcctTable.Columns.Add(DBase.newCol("Carryover","Double"));
                     AcctTable.Columns.Add(DBase.newCol("LastUpdate","Int64")); // yy-julian date  indicating last time this account was processed, for catch up purposes.

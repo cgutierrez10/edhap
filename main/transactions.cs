@@ -31,6 +31,7 @@ namespace edhap
                     // In case db does not have a table, it will be created here
                     DataTable TransTable = new DataTable("transactions");
                     DataColumn transId = DBase.newCol("transId","Int64");
+                    transId.DefaultValue = null;
                     transId.AutoIncrement = true;
                     TransTable.Columns.Add(transId);
                     DataColumn[] TransPrimKey = { transId };
@@ -40,6 +41,7 @@ namespace edhap
                     TransTable.Columns.Add(DBase.newCol("Direction","Boolean"));
                     TransTable.Columns.Add(DBase.newCol("Cleared","Boolean"));
                     TransTable.Columns.Add(DBase.newCol("Reconciled","Boolean"));
+                    TransTable.Columns.Add(DBase.newCol("Hidden","Boolean")); // Used by budget accounts
                     TransTable.Columns.Add(DBase.newCol("Memo","String"));
                     TransTable.Columns.Add(DBase.newCol("Date","Int64")); // Same as yy-julan date to be used above
                     TransTable.Columns.Add(DBase.newCol("Checknum","String"));
@@ -86,6 +88,8 @@ namespace edhap
                 Transrow["Budgetacct"] = acct2;
                 Transrow["Realacct"] = acct1;
             }
+
+
 
             setTrans(Transrow);
             return true;

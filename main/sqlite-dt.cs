@@ -11,6 +11,14 @@ namespace edhap
         private const String _filename = "temp.sqlite";
         // Provides:
         /*
+            ctor blank
+            ctor load from file
+            Add/remove table from dataset
+            create column definition object
+            select table if in dataset
+            save dataset
+
+
             Add/Change budget line
             Add/Change transaction
             Delete? Budget line, transaction? Should these be deletable or should they be retained and hidden?
@@ -22,48 +30,11 @@ namespace edhap
         */
 
         public db() {
-            // New blank db
+            // New blank db, individual tables will have classes that build and impliment access to the table
+            // Each one will add itself to this main dataset which provides some helpers like get table, get row, create columns
+            // Any new table can be added here initially then moved into a separate class later.
             // Will use the datatable, db from above, db(filename) will open a new one and toss that db. All code will use this db object.
             // Needs to build data tables
-            // Column name convention, lcase start means internal, ucase start means will be displayed and visible directly to user
-            /*
-            DataTable AcctTable = new DataTable("accounts");
-            DataColumn acctId = newCol("acctId","Int64");
-            acctId.AutoIncrement = true;
-            AcctTable.Columns.Add(acctId);
-            DataColumn[] AcctPrimKey = { acctId } ;
-            AcctTable.PrimaryKey = AcctPrimKey;
-            AcctTable.Columns.Add(newCol("Name","String"));
-            AcctTable.Columns.Add(newCol("budget","Boolean")); // Boolean, budget or real acct
-            AcctTable.Columns.Add(newCol("Tracking","Boolean"));
-            AcctTable.Columns.Add(newCol("Balance","Double"));
-            AcctTable.Columns.Add(newCol("WorkingBal","Double"));
-            AcctTable.Columns.Add(newCol("parent","Int64")); // Ties to another 'account' type object.
-            AcctTable.Columns.Add(newCol("Comment","String"));
-            AcctTable.Columns.Add(newCol("Carryover","Double"));
-            AcctTable.Columns.Add(newCol("LastUpdate","Int64")); // yy-julian date  indicating last time this account was processed, for catch up purposes.
-            */
-
-            /*
-            DataTable TransTable = new DataTable("transaction");
-            DataColumn transId = newCol("transId","Int64");
-            transId.AutoIncrement = true;
-            TransTable.Columns.Add(transId);
-            DataColumn[] TransPrimKey = { transId };
-            TransTable.PrimaryKey = TransPrimKey;
-            TransTable.Columns.Add(newCol("payeeId","Int64")); // Payee will be id keyed, display will pull the correct id-text keying
-            TransTable.Columns.Add(newCol("Amount","Double"));
-            TransTable.Columns.Add(newCol("Direction","Boolean"));
-            TransTable.Columns.Add(newCol("Cleared","Boolean"));
-            TransTable.Columns.Add(newCol("Reconciled","Boolean"));
-            TransTable.Columns.Add(newCol("Memo","String"));
-            TransTable.Columns.Add(newCol("Date","Int64")); // Same as yy-julan date to be used above
-            TransTable.Columns.Add(newCol("Checknum","String"));
-            TransTable.Columns.Add(newCol("Realacct","Int64"));
-            TransTable.Columns.Add(newCol("Budgetacct","Int64"));
-            TransTable.Columns.Add(newCol("splitkey","Int64")); // splitkey is the parent of split transactions
-            //TransTable.Columns.Add(newCol("trans-id","Int64")); 
-            */
 
             DataTable PayeeTable = new DataTable("payee");
             DataColumn payeeId = newCol("payeeId","Int64");
@@ -74,12 +45,7 @@ namespace edhap
             PayeeTable.Columns.Add(newCol("Payee","String"));
             PayeeTable.Columns.Add(newCol("acctId","Int64")); // Typical budget account this hits, another function can update this over time as the common spending habits change
 
-
-            //_db.Tables.Add(AcctTable);
-            //_db.Tables.Add(TransTable);
             _db.Tables.Add(PayeeTable);
-
-            //saveDb("test.db");
         }
 
         public db(string Filename) {
@@ -97,15 +63,12 @@ namespace edhap
             DataColumn Col = new DataColumn();
             Col.DataType = System.Type.GetType("System." + type);
             Col.ColumnName = name;
+            if (type == "String") { Col.DefaultValue = ""; }
+            else if (type == "Int64") { Col.DefaultValue = -1; }
+            else if (type == "Boolean") { Col.DefaultValue = false; }
+            else if (type == "Double") { Col.DefaultValue = 0.00; }
             return Col;
         }
-
-
-
-/*        public DataRow getTrans(Int64 TransId = -1) {
-            // Returns a new blank transaction with the correct columns
-            return getRow("transactions",TransId);
-        }*/
 
         public DataRow getRow(string tblName, Int64 keyVal) {
             // Generic version of get row, table names are always strings and at present keyvals are always ints
@@ -128,26 +91,16 @@ namespace edhap
             return retTbl;
         }
 
+        public void dropTbl(String tblName) {
+             if (_db.Tables.Contains(tblName)) {
+                _db.Tables.Remove(tblName);
+            }
+        }
         public Boolean setTbl(DataTable tbl) {
             // Generic version of get row, table names are always strings and at present keyvals are always ints
             _db.Tables.Add(tbl);
             return true;
         }
-
-/*        public Boolean setTrans(DataRow Transaction) {
-            // Received a valid budget type transaction and commits it, if new then add else update
-            // Handles single transactions, split transactions will pre-process and create multiple new/updates
-            
-            
-            // Should do a column validation here but won't for the time being
-            _db.Tables["transactions"].Rows.Add(Transaction);
-            return true;
-        }*/
-
-    /*    public Boolean rmTrans(Int64 key = -1) {
-            // Stub
-            return true;
-        }*/
 
         public Boolean saveDb(String writeFile = _filename) {
             using (var fileStream = File.Create(writeFile))
