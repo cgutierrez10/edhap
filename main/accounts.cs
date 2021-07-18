@@ -85,5 +85,9 @@ namespace edhap
 
         // Will want get/sets for all the columns
         // Also a zero out record would be nice for debugging
+        public Boolean getBudget(Int64 acct)
+        {
+            return (Boolean) getAcct(acct)["budget"];
+        }
     }
 }

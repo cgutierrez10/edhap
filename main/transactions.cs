@@ -7,10 +7,12 @@ namespace edhap
 {
     class Transactions {
         private DataTable TransTable = null;
+        private Accounts acct = null;
         private db DBase;
-        public Transactions(db dbase) {
+        public Transactions(db dbase, Accounts account) {
             // Call the get function once for setup
             this.DBase = dbase;
+            this.acct = account;
             TransTable = getTransTbl();
         }
 
@@ -27,7 +29,7 @@ namespace edhap
                     TransTable = DBase.getTbl("transactions");
                 } else {
                     // In case db does not have a table, it will be created here
-                    DataTable TransTable = new DataTable("transaction");
+                    DataTable TransTable = new DataTable("transactions");
                     DataColumn transId = DBase.newCol("transId","Int64");
                     transId.AutoIncrement = true;
                     TransTable.Columns.Add(transId);
@@ -51,21 +53,42 @@ namespace edhap
             return TransTable;
         }
 
-        public void addTrans(String name){
+        /*
+            More complex construction
+            Requires 2 accounts, should validate the accounts one is real one is budget and not the same
+            Requires an amount
+            date
+            as the minimum
+        */
+        public Boolean addTrans(Int64 acct1, Int64 acct2, Double amt, Int64 dt){
+            if (acct.getBudget(acct1) == acct.getBudget(acct2)) {
+                return false;
+            }
+
             DataRow Transrow = getTrans();
             //Transrow["TransId"] = 0; // Id auto increments
             Transrow["payeeId"] = -1; // This will be linked later
-            Transrow["Amount"] = 0.00;
-            Transrow["direction"] = true; // If amount is positive then true else false, positive = + to account balance
+            Transrow["Amount"] = amt < 0 ? (amt * -1) : amt;
+            Transrow["direction"] = amt < 0 ? false : true; // If amount is positive then true else false, positive = + to account balance
             Transrow["Cleared"] = false;
             Transrow["Reconciled"] = false;
             Transrow["Memo"] = "";
             Transrow["Date"] = 20001; // Same Jan 1st yy-julian blank value
             Transrow["Checknum"] = "";
-            Transrow["acctreal"] = -1; // Will normally be required
-            Transrow["acctbudget"] = -1; // Generally the software will enforce real acct != budget account
+            //Transrow["acctreal"] = -1; // Will normally be required
+            //Transrow["acctbudget"] = -1; // Generally the software will enforce real acct != budget account
             Transrow["splitkey"] = -1; // If split transaction, splitkey will be next budget account portion, full balance will sit in primary transaction
+            
+            if (acct.getBudget(acct1)) {
+                Transrow["Budgetacct"] = acct1;
+                Transrow["Realacct"] = acct2;
+            } else {
+                Transrow["Budgetacct"] = acct2;
+                Transrow["Realacct"] = acct1;
+            }
+
             setTrans(Transrow);
+            return true;
         }
 
         public DataRow getTrans(Int64 TransId = -1) {
