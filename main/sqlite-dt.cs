@@ -1,12 +1,14 @@
 using System;
 using System.Data;
+using System.IO;
+using System.IO.Compression;
 
 
 namespace edhap
 {
     class db {
         private DataSet _db = new DataSet(); // Placeholder for coding
-        private String _filename = "temp.sqlite";
+        private const String _filename = "temp.sqlite";
         // Provides:
         /*
             Add/Change budget line
@@ -24,6 +26,7 @@ namespace edhap
             // Will use the datatable, db from above, db(filename) will open a new one and toss that db. All code will use this db object.
             // Needs to build data tables
             // Column name convention, lcase start means internal, ucase start means will be displayed and visible directly to user
+            /*
             DataTable AcctTable = new DataTable("accounts");
             DataColumn acctId = newCol("acctId","Int64");
             acctId.AutoIncrement = true;
@@ -39,8 +42,9 @@ namespace edhap
             AcctTable.Columns.Add(newCol("Comment","String"));
             AcctTable.Columns.Add(newCol("Carryover","Double"));
             AcctTable.Columns.Add(newCol("LastUpdate","Int64")); // yy-julian date  indicating last time this account was processed, for catch up purposes.
-            
+            */
 
+            /*
             DataTable TransTable = new DataTable("transaction");
             DataColumn transId = newCol("transId","Int64");
             transId.AutoIncrement = true;
@@ -54,11 +58,12 @@ namespace edhap
             TransTable.Columns.Add(newCol("Reconciled","Boolean"));
             TransTable.Columns.Add(newCol("Memo","String"));
             TransTable.Columns.Add(newCol("Date","Int64")); // Same as yy-julan date to be used above
-            TransTable.Columns.Add(newCol("Check-Num","String"));
-            TransTable.Columns.Add(newCol("Real-Acct","Int64"));
-            TransTable.Columns.Add(newCol("Budget-Acct","Int64"));
-            TransTable.Columns.Add(newCol("split-join-id","Int64"));
-            TransTable.Columns.Add(newCol("trans-id","Int64"));
+            TransTable.Columns.Add(newCol("Checknum","String"));
+            TransTable.Columns.Add(newCol("Realacct","Int64"));
+            TransTable.Columns.Add(newCol("Budgetacct","Int64"));
+            TransTable.Columns.Add(newCol("splitkey","Int64")); // splitkey is the parent of split transactions
+            //TransTable.Columns.Add(newCol("trans-id","Int64")); 
+            */
 
             DataTable PayeeTable = new DataTable("payee");
             DataColumn payeeId = newCol("payeeId","Int64");
@@ -70,60 +75,89 @@ namespace edhap
             PayeeTable.Columns.Add(newCol("acctId","Int64")); // Typical budget account this hits, another function can update this over time as the common spending habits change
 
 
-            _db.Tables.Add(AcctTable);
-            _db.Tables.Add(TransTable);
+            //_db.Tables.Add(AcctTable);
+            //_db.Tables.Add(TransTable);
             _db.Tables.Add(PayeeTable);
 
-            //_db.writeFile("test.db");
+            //saveDb("test.db");
         }
 
         public db(string Filename) {
-            // open existing file
+            // open existing file, reverse of write gzip decompress and readXml
+            using (var fileStream = File.OpenRead(Filename))
+            {
+                using (var zipStream = new GZipStream(fileStream, CompressionMode.Decompress))
+                {
+                    _db.ReadXml(zipStream);
+                }
+            }       
         }
 
-        private DataColumn newCol(string name, string type) {
+        public DataColumn newCol(string name, string type) {
             DataColumn Col = new DataColumn();
             Col.DataType = System.Type.GetType("System." + type);
             Col.ColumnName = name;
             return Col;
         }
 
-        public DataRow getAcct(Int64 AcctId = -1) {
-            // Returns a new blank row with the correct columns
-            return getRow("AcctTable",AcctId);
-        }
 
-        public Boolean setAcct(DataRow Account) {
-            // Received a valid budget type row and commits it, if new then add else update
-            // Validate table columns match underlying table
-            return true;
-        }
 
-        public DataRow getTrans(Int64 TransId = -1) {
+/*        public DataRow getTrans(Int64 TransId = -1) {
             // Returns a new blank transaction with the correct columns
-            return getRow("TransTable",TransId);
-        }
+            return getRow("transactions",TransId);
+        }*/
 
-        private DataRow getRow(string tblName, Int64 keyVal) {
+        public DataRow getRow(string tblName, Int64 keyVal) {
             // Generic version of get row, table names are always strings and at present keyvals are always ints
             DataTable accts = _db.Tables[tblName];
-            DataRow row = _db.Tables[tblName].Rows.Find(keyVal);
-            if (keyVal == 0 || row == null) {
+            DataRow row;
+            if (_db.Tables[tblName].Rows.Contains(keyVal)) {
+                row = _db.Tables[tblName].Rows.Find(keyVal);
+            } else {
                 row = _db.Tables[tblName].NewRow();
             }
             return row;
         }
 
-        public Boolean setTrans(DataRow Transaction) {
-            // Received a valid budget type transaction and commits it, if new then add else update
-            // Handles single transactions, split transactions will pre-process and create multiple new/updates
+        public DataTable getTbl(string tblName) {
+            // Generic version of get row, table names are always strings and at present keyvals are always ints
+            DataTable retTbl = null;
+            if (_db.Tables.Contains(tblName)) {
+                retTbl = _db.Tables[tblName];
+            }
+            return retTbl;
+        }
+
+        public Boolean setTbl(DataTable tbl) {
+            // Generic version of get row, table names are always strings and at present keyvals are always ints
+            _db.Tables.Add(tbl);
             return true;
         }
 
-        /*
-        public Boolean saveDb(String writeFile = this._filename) {
+/*        public Boolean setTrans(DataRow Transaction) {
+            // Received a valid budget type transaction and commits it, if new then add else update
+            // Handles single transactions, split transactions will pre-process and create multiple new/updates
+            
+            
+            // Should do a column validation here but won't for the time being
+            _db.Tables["transactions"].Rows.Add(Transaction);
+            return true;
+        }*/
+
+    /*    public Boolean rmTrans(Int64 key = -1) {
+            // Stub
+            return true;
+        }*/
+
+        public Boolean saveDb(String writeFile = _filename) {
+            using (var fileStream = File.Create(writeFile))
+            {
+                using (var zipStream = new GZipStream(fileStream, CompressionMode.Compress))
+                {
+                    _db.WriteXml(zipStream, XmlWriteMode.WriteSchema);
+                }
+            }       
             return true;
         }
-        */
     }
 }
