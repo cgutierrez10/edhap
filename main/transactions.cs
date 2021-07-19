@@ -88,11 +88,7 @@ namespace edhap
                 Transrow["Budgetacct"] = acct2;
                 Transrow["Realacct"] = acct1;
             }
-
-
-
-            setTrans(Transrow);
-            return true;
+            return setTrans(Transrow);
         }
 
         public DataRow getTrans(Int64 TransId = -1) {
@@ -106,7 +102,7 @@ namespace edhap
             
             // Should do a column validation here but won't for the time being
             getTransTbl().Rows.Add(Transaction);
-            return true;
+            return getTransTbl().Rows.Contains(Transaction["transId"]);
         }
 
         public Boolean rmTrans(Int64 key = -1) {

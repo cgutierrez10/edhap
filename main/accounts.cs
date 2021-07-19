@@ -7,11 +7,13 @@ namespace edhap
 {
     class Accounts {
         private DataTable AcctTable = null;
+        private AccountGroup AcctGrpTbl = null;
         private db DBase;
-        public Accounts(db dbase) {
+        public Accounts(db dbase, AccountGroup AcctGrp) {
             // Call the get function once for setup
             this.DBase = dbase;
             AcctTable = getAcctTbl();
+            AcctGrpTbl = AcctGrp;
         }
 
         public DataTable getAcctTbl() {
@@ -55,7 +57,7 @@ namespace edhap
             return AcctTable;
         }
 
-        public void addAcct(String name, Int64 acctgroup, Boolean budget){
+        public Boolean addAcct(String name, Int64 acctgroup, Boolean budget){
             DataRow acctrow = getAcct();
             acctrow["Name"] = name;
             //acctrow["acctId"] = 0; // Id auto increments
@@ -73,7 +75,7 @@ namespace edhap
             //acctrow["monthBudget"] = 0.00; // Default is fine
             //acctrow["perdiem"] = 0.00; // Default is fine
             // From this the usual blank account would just be 0'd balanced, no comment, name tracking and lastupdate = today
-            setAcct(acctrow);
+            return setAcct(acctrow);
         }
 
         public DataRow getAcct(Int64 AcctId = -1) {
@@ -86,8 +88,12 @@ namespace edhap
             // Validate table columns match underlying table
             
             // Should do a column validation here but won't for the time being
+            if ((Boolean) Account["budget"] != (Boolean) AcctGrpTbl.getAcctGrp((Int64) Account["parent"])["budget"])
+            {
+                return false;
+            }
             getAcctTbl().Rows.Add(Account);
-            return true;
+            return getAcctTbl().Rows.Contains(Account["acctId"]); // If successfully added then the table will now contain this record.
         }
 
         public Boolean rmAccount(Int64 key = -1) {

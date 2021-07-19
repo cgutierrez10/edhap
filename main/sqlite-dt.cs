@@ -9,6 +9,8 @@ namespace edhap
     class db {
         private DataSet _db = new DataSet(); // Placeholder for coding
         private const String _filename = "temp.sqlite";
+
+        Boolean gzip = false;
         // Provides:
         /*
             ctor blank
@@ -38,6 +40,7 @@ namespace edhap
 
             DataTable PayeeTable = new DataTable("payee");
             DataColumn payeeId = newCol("payeeId","Int64");
+            payeeId.DefaultValue = null;
             payeeId.AutoIncrement = true;
             PayeeTable.Columns.Add(payeeId);
             DataColumn[] PayeePrimKey = { payeeId };
@@ -50,13 +53,19 @@ namespace edhap
 
         public db(string Filename) {
             // open existing file, reverse of write gzip decompress and readXml
-            using (var fileStream = File.OpenRead(Filename))
-            {
-                using (var zipStream = new GZipStream(fileStream, CompressionMode.Decompress))
-                {
-                    _db.ReadXml(zipStream);
+            
+            if (gzip) {
+                using (var fileStream = File.OpenRead(Filename))
+                {        
+                    using (var zipStream = new GZipStream(fileStream, CompressionMode.Decompress))
+                    {
+                        _db.ReadXml(zipStream);
+                    } 
                 }
-            }       
+            }
+            else {
+                _db.ReadXml("test.xml");
+            }
         }
 
         public DataColumn newCol(string name, string type) {
@@ -103,13 +112,18 @@ namespace edhap
         }
 
         public Boolean saveDb(String writeFile = _filename) {
-            using (var fileStream = File.Create(writeFile))
-            {
-                using (var zipStream = new GZipStream(fileStream, CompressionMode.Compress))
-                {
-                    _db.WriteXml(zipStream, XmlWriteMode.WriteSchema);
+            if (gzip) {
+                using (var fileStream = File.Create(writeFile))
+                {   
+                    using (var zipStream = new GZipStream(fileStream, CompressionMode.Compress))
+                    {
+                        _db.WriteXml(zipStream, XmlWriteMode.WriteSchema);
+                    } 
                 }
-            }       
+            }    
+            else {
+                _db.WriteXml("test.xml", XmlWriteMode.WriteSchema);
+            }   
             return true;
         }
     }

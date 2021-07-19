@@ -7,7 +7,7 @@ namespace edhap
 {
     class AccountGroup {
         DataTable AcctGrpTbl = null;
-        private Accounts acct = null;
+        //private Accounts acct = null;
         private db DBase;
 
         /* 
@@ -20,10 +20,10 @@ namespace edhap
             For budgets the goal should be to ensure the top line balance is 0 always.
         */
 
-        public AccountGroup(db dbase, Accounts account) {
+        public AccountGroup(db dbase) {
             // Call the get function once for setup
             this.DBase = dbase;
-            this.acct = account;
+            //this.acct = account;
             AcctGrpTbl = getAcctGrpTbl();
         }
         
@@ -71,9 +71,18 @@ namespace edhap
             //acctgrp["Carry"] = false; // Default is fine
             acctgrp["Budget"] = budget;
             acctgrp["LastUpdate"] = 20001;
-            return true;
+            return setAcctGrp(acctgrp);
         }
-        
+
+        public Boolean setAcctGrp(DataRow acctgrp) {
+            AcctGrpTbl.Rows.Add(acctgrp);
+            return AcctGrpTbl.Rows.Contains(acctgrp["groupId"]); // If successfully added then the table will now contain this record.
+        }
+        public DataRow getAcctGrp(Int64 AcctId = -1) {
+            // Returns a new blank row with the correct columns
+            return DBase.getRow("accountgroup",AcctId);
+        }
+
         /*  Account processing path
             Update all accounts (iterate over and balance each), accounts object should have a balance() and balanceAll() call
             Then update all account groups now that the accounts are balanced, this must be done as a balanceAll(), no way to update a middle or bottom line if another input group may be out of balance
