@@ -43,24 +43,35 @@ namespace edhap
                     AcctTable.Columns.Add(DBase.newCol("Comment","String"));
                     AcctTable.Columns.Add(DBase.newCol("Carryover","Double"));
                     AcctTable.Columns.Add(DBase.newCol("LastUpdate","Int64")); // yy-julian date  indicating last time this account was processed, for catch up purposes.
+                    // These values are used for budget accounts only
+                    AcctTable.Columns.Add(DBase.newCol("clrBal","Double")); 
+                    AcctTable.Columns.Add(DBase.newCol("avlBal","Double"));
+                    AcctTable.Columns.Add(DBase.newCol("windowBudget","Double"));
+                    AcctTable.Columns.Add(DBase.newCol("monthBudget","Double"));
+                    AcctTable.Columns.Add(DBase.newCol("perdiem","Boolean"));
                     DBase.setTbl(AcctTable);
                 }
             }
             return AcctTable;
         }
 
-        public void addAcct(String name){
+        public void addAcct(String name, Int64 acctgroup, Boolean budget){
             DataRow acctrow = getAcct();
             acctrow["Name"] = name;
             //acctrow["acctId"] = 0; // Id auto increments
-            acctrow["budget"] = true;
+            acctrow["budget"] = budget;
             acctrow["Tracking"] = true;
-            acctrow["Balance"] = 0.00;
-            acctrow["WorkingBal"] = 0.00;
-            acctrow["parent"] = -1;
-            acctrow["Comment"] = "";
-            acctrow["Carryover"] = 0.00;
+            //acctrow["Balance"] = 0.00; // Default is fine
+            //acctrow["WorkingBal"] = 0.00; // Default is fine
+            acctrow["parent"] = acctgroup;
+            //acctrow["Comment"] = ""; // Default is fine
+            //acctrow["Carryover"] = 0.00; // Default is fine
             acctrow["LastUpdate"] = 20001; // Jan 1st 2020
+            //acctrow["clrBal"] = 0.00; // Default is fine
+            //acctrow["avlBal"] = 0.00; // Default is fine
+            //acctrow["windowBudget"] = 0.00; // Default is fine
+            //acctrow["monthBudget"] = 0.00; // Default is fine
+            //acctrow["perdiem"] = 0.00; // Default is fine
             // From this the usual blank account would just be 0'd balanced, no comment, name tracking and lastupdate = today
             setAcct(acctrow);
         }
@@ -71,7 +82,7 @@ namespace edhap
         }
 
         public Boolean setAcct(DataRow Account) {
-            // Received a valid budget type row and commits it, if new then add else update
+            // Received a valid accounts type row and commits it, if new then add else update
             // Validate table columns match underlying table
             
             // Should do a column validation here but won't for the time being
@@ -81,6 +92,8 @@ namespace edhap
 
         public Boolean rmAccount(Int64 key = -1) {
             // Stub
+            // Account deletion isn't always valid, history and present data may require it.
+            // Only way to do an account deletion would be to move all transactions to another account
             return true;
         }
 

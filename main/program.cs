@@ -48,6 +48,18 @@ namespace edhap
                 Budget class needs a counter enter (income) for the other side of the dual entry
                 Need to create acct containers to group accounting
             */
+
+            // Necessary to create account groups
+            // Then accounts
+            // Then transactions
+            // And set budget values
+            // And determine the target results
+            // Write the math processing
+            // Etc, etc, etc.
+            // Possibly best thing to do it provide a command line argument to create each thing then manually set values?
+
+            
+
             Console.WriteLine("Test");
             databaseObj.saveDb("test.xml.gz");
         }

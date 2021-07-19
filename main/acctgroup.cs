@@ -61,6 +61,19 @@ namespace edhap
             return AcctGrpTbl;
         }
 
+        public Boolean createAcctGrp(String name, Int64 parentacct, Boolean budget)
+        {
+            DataRow acctgrp = DBase.getRow("accountgroup",-1);
+            acctgrp["Name"] = name;
+            //acctgrp["runbal"] = 0.00; // Default is fine
+            acctgrp["Parent"] = parentacct;
+            //acctgrp["Comment"] = ""; // Default is fine
+            //acctgrp["Carry"] = false; // Default is fine
+            acctgrp["Budget"] = budget;
+            acctgrp["LastUpdate"] = 20001;
+            return true;
+        }
+        
         /*  Account processing path
             Update all accounts (iterate over and balance each), accounts object should have a balance() and balanceAll() call
             Then update all account groups now that the accounts are balanced, this must be done as a balanceAll(), no way to update a middle or bottom line if another input group may be out of balance
