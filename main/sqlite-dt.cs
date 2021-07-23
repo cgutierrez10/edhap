@@ -62,10 +62,10 @@ namespace edhap
             DataColumn Col = new DataColumn();
             Col.DataType = System.Type.GetType("System." + type);
             Col.ColumnName = name;
-            if (type == "String") { Col.DefaultValue = ""; }
-            else if (type == "Int64") { Col.DefaultValue = -1; }
-            else if (type == "Boolean") { Col.DefaultValue = false; }
-            else if (type == "Double") { Col.DefaultValue = 0.00; }
+            if (type == "String") { Col.DefaultValue = ""; Col.DataType = typeof(String); }
+            else if (type == "Int64") { Col.DefaultValue = -1; Col.DataType = typeof(Int64); }
+            else if (type == "Boolean") { Col.DefaultValue = false; Col.DataType = typeof(Boolean); }
+            else if (type == "Double") { Col.DefaultValue = 0.00; Col.DataType = System.Type.GetType("System.Double"); }
             return Col;
         }
 

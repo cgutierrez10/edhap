@@ -92,7 +92,12 @@ namespace edhap
             {
                 return false;
             }
-            getAcctTbl().Rows.Add(Account);
+            // Must be a get and set (update) or a add-create set
+            //if (getAcctTbl().Rows.Contains(Account["acctId"])) {
+                getAcctTbl().LoadDataRow(Account.ItemArray, LoadOption.PreserveChanges);
+            //} else {
+            //    getAcctTbl().Rows.Add(Account);
+            //}
             return getAcctTbl().Rows.Contains(Account["acctId"]); // If successfully added then the table will now contain this record.
         }
 
@@ -108,6 +113,25 @@ namespace edhap
         public Boolean getBudget(Int64 acct)
         {
             return (Boolean) getAcct(acct)["budget"];
+        }
+
+        public void updateWorkBal(Int64 acct, Double balance, Boolean direction) {
+            // All balances are positive, direction true = + else -
+            DataRow account = AcctTable.NewRow();
+            account = getAcct(acct);
+            Double bal = Double.Parse(account["WorkingBal"].ToString());
+            bal += (direction == (Boolean) true) ? balance : balance * -1;
+            account["WorkingBal"] = bal;
+            setAcct(account);
+        }
+        public void updateCurBal(Int64 acct, Double balance, Boolean direction) {
+            // All balances are positive, direction true = + else -
+            DataRow account = AcctTable.NewRow();
+            account = getAcct(acct);
+            Double bal = Double.Parse(account["Balance"].ToString());
+            bal += (direction == (Boolean) true) ? balance : balance * -1;
+            account["Balance"] = bal;
+            setAcct(account);
         }
     }
 }

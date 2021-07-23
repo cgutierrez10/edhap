@@ -102,10 +102,12 @@ namespace edhap
             // If budget false, or realacct true then fail
             if (   (acct.getBudget((Int64) Transaction["Budgetacct"]) == ((Boolean) false))
                 || (acct.getBudget((Int64) Transaction["Realacct"]) == ((Boolean) true)))
-               {
+            {
                 return false;
-               }
-            getTransTbl().Rows.Add(Transaction);
+            }
+            getTransTbl().LoadDataRow(Transaction.ItemArray, LoadOption.PreserveChanges);
+            // Update working balance immediately
+            acct.updateWorkBal((Int64) Transaction["Realacct"], (Double) Transaction["Amount"], (Boolean) Transaction["direction"]);
             return getTransTbl().Rows.Contains(Transaction["transId"]);
         }
 

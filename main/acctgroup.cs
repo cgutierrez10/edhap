@@ -75,7 +75,7 @@ namespace edhap
         }
 
         public Boolean setAcctGrp(DataRow acctgrp) {
-            AcctGrpTbl.Rows.Add(acctgrp);
+            getAcctGrpTbl().LoadDataRow(acctgrp.ItemArray, LoadOption.PreserveChanges);
             return AcctGrpTbl.Rows.Contains(acctgrp["groupId"]); // If successfully added then the table will now contain this record.
         }
         public DataRow getAcctGrp(Int64 AcctId = -1) {
