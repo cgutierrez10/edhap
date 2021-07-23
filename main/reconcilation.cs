@@ -5,7 +5,7 @@ using System.IO.Compression;
 
 namespace edhap
 {
-    class Reconcile {
+    public class Reconcile {
         // Handles the transaction reconcilation processing
         // Reads through each transaction
         // Does the bookkeeping for the real acct

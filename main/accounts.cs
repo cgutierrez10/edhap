@@ -5,7 +5,7 @@ using System.IO.Compression;
 
 namespace edhap
 {
-    class Accounts {
+    public class Accounts {
         private DataTable AcctTable = null;
         private AccountGroup AcctGrpTbl = null;
         private db DBase;
@@ -33,6 +33,7 @@ namespace edhap
                     DataColumn acctId = DBase.newCol("acctId","Int64");
                     acctId.DefaultValue = null;
                     acctId.AutoIncrement = true;
+                    acctId.ReadOnly = true;
                     AcctTable.Columns.Add(acctId);
                     DataColumn[] AcctPrimKey = { acctId } ;
                     AcctTable.PrimaryKey = AcctPrimKey;

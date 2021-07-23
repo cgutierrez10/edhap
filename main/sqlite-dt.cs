@@ -6,7 +6,7 @@ using System.IO.Compression;
 
 namespace edhap
 {
-    class db {
+    public class db {
         private DataSet _db = new DataSet(); // Placeholder for coding
         private const String _filename = "temp.sqlite";
 

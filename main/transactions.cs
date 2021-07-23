@@ -5,7 +5,7 @@ using System.IO.Compression;
 
 namespace edhap
 {
-    class Transactions {
+    public class Transactions {
         private DataTable TransTable = null;
         private Accounts acct = null;
         private db DBase;
@@ -33,6 +33,7 @@ namespace edhap
                     DataColumn transId = DBase.newCol("transId","Int64");
                     transId.DefaultValue = null;
                     transId.AutoIncrement = true;
+                    transId.ReadOnly = true;
                     TransTable.Columns.Add(transId);
                     DataColumn[] TransPrimKey = { transId };
                     TransTable.PrimaryKey = TransPrimKey;
@@ -47,6 +48,8 @@ namespace edhap
                     TransTable.Columns.Add(DBase.newCol("Checknum","String"));
                     TransTable.Columns.Add(DBase.newCol("Realacct","Int64"));
                     TransTable.Columns.Add(DBase.newCol("Budgetacct","Int64"));
+                    // Split key should also be read only, but user cannot directly modify it
+                    // May be some special situation where splitkey could be modified not locking it readonly yet
                     TransTable.Columns.Add(DBase.newCol("splitkey","Int64")); // splitkey is the parent of split transactions
                     //TransTable.Columns.Add(newCol("trans-id","Int64")); 
                     DBase.setTbl(TransTable);
