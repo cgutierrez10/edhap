@@ -92,12 +92,7 @@ namespace edhap
             {
                 return false;
             }
-            // Must be a get and set (update) or a add-create set
-            //if (getAcctTbl().Rows.Contains(Account["acctId"])) {
-                getAcctTbl().LoadDataRow(Account.ItemArray, LoadOption.PreserveChanges);
-            //} else {
-            //    getAcctTbl().Rows.Add(Account);
-            //}
+            getAcctTbl().LoadDataRow(Account.ItemArray, LoadOption.PreserveChanges);
             return getAcctTbl().Rows.Contains(Account["acctId"]); // If successfully added then the table will now contain this record.
         }
 

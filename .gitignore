@@ -1,3 +1,5 @@
 main/bin/*
 main/obj/*
 bin/*
+edhapTests/bin/*
+edhapTests/obj/*
