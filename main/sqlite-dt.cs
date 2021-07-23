@@ -19,16 +19,6 @@ namespace edhap
             create column definition object
             select table if in dataset
             save dataset
-
-
-            Add/Change budget line
-            Add/Change transaction
-            Delete? Budget line, transaction? Should these be deletable or should they be retained and hidden?
-            Budget may lose history consistency with deletions
-            Add/Change payee
-            Retrieve payee budget type guess
-            Retrieve account top line dataset (other classes will handle this dataset for doing calculations)
-            Save or save as (copy)
         */
 
         public db() {

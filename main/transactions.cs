@@ -55,33 +55,26 @@ namespace edhap
             return TransTable;
         }
 
-        /*
-            More complex construction
-            Requires 2 accounts, should validate the accounts one is real one is budget and not the same
-            Requires an amount
-            date
-            as the minimum
-        */
+        // Requires 2 accounts, should validate the accounts one is real one is budget and not the same
+        // Requires an amount, date
         public Boolean addTrans(Int64 acct1, Int64 acct2, Double amt, Int64 dt){
-            if (acct.getBudget(acct1) == acct.getBudget(acct2)) {
-                return false;
-            }
-
             DataRow Transrow = getTrans();
-            //Transrow["TransId"] = 0; // Id auto increments
+            //Transrow["transId"] = 0; // Id auto increments
             Transrow["payeeId"] = -1; // This will be linked later
             Transrow["Amount"] = amt < 0 ? (amt * -1) : amt;
             Transrow["direction"] = amt < 0 ? false : true; // If amount is positive then true else false, positive = + to account balance
-            Transrow["Cleared"] = false;
-            Transrow["Reconciled"] = false;
-            Transrow["Memo"] = "";
+            //Transrow["Cleared"] = false; // Default is fine
+            //Transrow["Reconciled"] = false; // Default is fine
+            //Transrow["Memo"] = ""; // Default is fine
             Transrow["Date"] = 20001; // Same Jan 1st yy-julian blank value
-            Transrow["Checknum"] = "";
-            //Transrow["acctreal"] = -1; // Will normally be required
-            //Transrow["acctbudget"] = -1; // Generally the software will enforce real acct != budget account
-            Transrow["splitkey"] = -1; // If split transaction, splitkey will be next budget account portion, full balance will sit in primary transaction
-            
-            if (acct.getBudget(acct1)) {
+            //Transrow["Checknum"] = ""; // Default is fine
+            //Transrow["acctreal"] = -1; // Required ctor arg
+            //Transrow["acctbudget"] = -1; // Required ctor arg
+            //Transrow["splitkey"] = -1; // If split transaction, splitkey will be next budget account portion, full balance will sit in primary transaction
+            if (acct.getBudget(acct1) == acct.getBudget(acct2)) {
+                return false;
+            }
+            if (acct.getBudget(acct1) == ((Boolean) true)) {
                 Transrow["Budgetacct"] = acct1;
                 Transrow["Realacct"] = acct2;
             } else {
@@ -101,6 +94,17 @@ namespace edhap
             // Validate table columns match underlying table
             
             // Should do a column validation here but won't for the time being
+
+            // What is the bug here? Above it assigns budgetacct based on the result of getbudget
+            // The debugging writeline's are showing true values
+            // But if they match up this shouldn't drop in here regardless.
+            // Budget account must be true, realaccount must be false
+            // If budget false, or realacct true then fail
+            if (   (acct.getBudget((Int64) Transaction["Budgetacct"]) == ((Boolean) false))
+                || (acct.getBudget((Int64) Transaction["Realacct"]) == ((Boolean) true)))
+               {
+                return false;
+               }
             getTransTbl().Rows.Add(Transaction);
             return getTransTbl().Rows.Contains(Transaction["transId"]);
         }

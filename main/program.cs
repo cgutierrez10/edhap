@@ -24,13 +24,13 @@ namespace edhap
             // Also unit testing soon. Time for that.
             if (args.Length > 0) {
                 if (args[0] == "acctgrp" && args.Length == 4) { 
-                    Console.WriteLine(AcctGrp.createAcctGrp(args[1], Int64.Parse(args[2]), args[3] == "true" ? true : false).ToString());
+                    Console.WriteLine("Create acctgroup: " + AcctGrp.createAcctGrp(args[1], Int64.Parse(args[2]), args[3] == "true" ? true : false).ToString());
                 }
                 if (args[0] == "acct" && args.Length == 4) { 
-                    Console.WriteLine(Acct.addAcct(args[1], Int64.Parse(args[2]), args[3] == "true" ? true : false).ToString());
+                    Console.WriteLine("Create account: " + Acct.addAcct(args[1], Int64.Parse(args[2]), args[3] == "true" ? true : false).ToString());
                 }
                 if (args[0] == "trans" && args.Length == 4) { 
-                    Console.WriteLine(Trans.addTrans(Int64.Parse(args[1]), Int64.Parse(args[2]), Double.Parse(args[3]), 20001).ToString());
+                    Console.WriteLine("Create transaction: " + Trans.addTrans(Int64.Parse(args[1]), Int64.Parse(args[2]), Double.Parse(args[3]), 20001).ToString());
                 }
             }
             /*
