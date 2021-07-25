@@ -18,7 +18,7 @@ namespace edhap
 
         public DataTable getAcctTbl() {
             // This function creates a data table and provides it back. Allows this class to work with a data table is has defined while the dataset (db) handler can have this table added for its maintenance and crossreferences
-                        // Needs to build data tables
+            // Needs to build data tables
             // Column name convention, lcase start means internal, ucase start means will be displayed and visible directly to user
             // All code paths are meant to set AcctTable and final return always returns that value
             if (AcctTable == null) 
@@ -94,6 +94,7 @@ namespace edhap
                 return false;
             }
             getAcctTbl().LoadDataRow(Account.ItemArray, LoadOption.PreserveChanges);
+            getAcctTbl().AcceptChanges();
             return getAcctTbl().Rows.Contains(Account["acctId"]); // If successfully added then the table will now contain this record.
         }
 
@@ -115,6 +116,9 @@ namespace edhap
             // All balances are positive, direction true = + else -
             DataRow account = AcctTable.NewRow();
             account = getAcct(acct);
+            if (account == null) {
+                return;
+            }
             Double bal = Double.Parse(account["WorkingBal"].ToString());
             bal += (direction == (Boolean) true) ? balance : balance * -1;
             account["WorkingBal"] = bal;

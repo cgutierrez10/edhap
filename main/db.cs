@@ -56,6 +56,7 @@ namespace edhap
             else {
                 _db.ReadXml("test.xml");
             }
+            _db.AcceptChanges(); // Apparently after a load no changes are in an accept state.
         }
 
         public DataColumn newCol(string name, string type) {
@@ -102,6 +103,7 @@ namespace edhap
         }
 
         public Boolean saveDb(String writeFile = _filename) {
+            _db.AcceptChanges();
             if (gzip) {
                 using (var fileStream = File.Create(writeFile))
                 {   

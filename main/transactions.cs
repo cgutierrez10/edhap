@@ -60,22 +60,14 @@ namespace edhap
 
         // Requires 2 accounts, should validate the accounts one is real one is budget and not the same
         // Requires an amount, date
-        public Boolean addTrans(Int64 acct1, Int64 acct2, Double amt, Int64 dt){
-            DataRow Transrow = getTrans();
-            //Transrow["transId"] = 0; // Id auto increments
+        public Int64 addTrans(Int64 acct1, Int64 acct2, Double amt, Int64 dt){
+            DataRow Transrow = TransTable.NewRow();
             Transrow["payeeId"] = -1; // This will be linked later
             Transrow["Amount"] = amt < 0 ? (amt * -1) : amt;
             Transrow["direction"] = amt < 0 ? false : true; // If amount is positive then true else false, positive = + to account balance
-            //Transrow["Cleared"] = false; // Default is fine
-            //Transrow["Reconciled"] = false; // Default is fine
-            //Transrow["Memo"] = ""; // Default is fine
             Transrow["Date"] = 20001; // Same Jan 1st yy-julian blank value
-            //Transrow["Checknum"] = ""; // Default is fine
-            //Transrow["acctreal"] = -1; // Required ctor arg
-            //Transrow["acctbudget"] = -1; // Required ctor arg
-            //Transrow["splitkey"] = -1; // If split transaction, splitkey will be next budget account portion, full balance will sit in primary transaction
             if (acct.getBudget(acct1) == acct.getBudget(acct2)) {
-                return false;
+                return -1;
             }
             if (acct.getBudget(acct1) == ((Boolean) true)) {
                 Transrow["Budgetacct"] = acct1;
@@ -84,7 +76,15 @@ namespace edhap
                 Transrow["Budgetacct"] = acct2;
                 Transrow["Realacct"] = acct1;
             }
-            return setTrans(Transrow);
+            if (setTrans(Transrow))
+            {
+                TransTable.AcceptChanges();
+                Console.WriteLine(Transrow["transId"].ToString());
+                return (Int64) Transrow["transId"];
+            } else {
+                TransTable.RejectChanges();
+                return -1;
+            }
         }
 
         public DataRow getTrans(Int64 TransId = -1) {
@@ -92,7 +92,7 @@ namespace edhap
             return DBase.getRow("transactions",TransId);
         }
 
-        public Boolean setTrans(DataRow Transaction) {
+        public bool setTrans(DataRow Transaction) {
             // Received a valid budget type row and commits it, if new then add else update
             // Validate table columns match underlying table
             
@@ -109,16 +109,30 @@ namespace edhap
                 return false;
             }
             getTransTbl().LoadDataRow(Transaction.ItemArray, LoadOption.PreserveChanges);
+            getTransTbl().AcceptChanges();
             // Update working balance immediately
+            // This started failing now. Update account returning no original data to access?
             acct.updateWorkBal((Int64) Transaction["Realacct"], (Double) Transaction["Amount"], (Boolean) Transaction["direction"]);
             return getTransTbl().Rows.Contains(Transaction["transId"]);
         }
 
-        public Boolean rmTrans(Int64 key = -1) {
+        public bool rmTrans(Int64 key = -1) {
             // Stub
             // This should probably be some disable but not delete, or a counter transaction,
             // Generally in accounting one never removes a receipt from the register but reverses it.
             return true;
+        }
+
+        // Primarily a testing function
+        public int Count() {
+            int retVal = 0;
+            // Apparently table.rows.count throws an exception when there are no rows.
+            try {
+                retVal = TransTable.Rows.Count;
+                //System.Console.WriteLine(retVal);
+            } catch (Exception e) { String useless = e.ToString(); } // Make the compiler warning about not using 'e' go away
+            //System.Console.WriteLine(retVal);
+            return retVal;
         }
 
         // Will want get/sets for all the columns
