@@ -79,7 +79,7 @@ namespace edhap
             if (setTrans(Transrow))
             {
                 TransTable.AcceptChanges();
-                Console.WriteLine(Transrow["transId"].ToString());
+                //Console.WriteLine(Transrow["transId"].ToString());
                 return (Int64) Transrow["transId"];
             } else {
                 TransTable.RejectChanges();
@@ -132,10 +132,16 @@ namespace edhap
                 //System.Console.WriteLine(retVal);
             } catch (Exception e) { String useless = e.ToString(); } // Make the compiler warning about not using 'e' go away
             //System.Console.WriteLine(retVal);
+            //return retVal;
             return retVal;
         }
 
         // Will want get/sets for all the columns
         // Also a zero out record would be nice for debugging
+
+        // Want a method for getting transactions for a specific account, through a date range, account/unbalanced or unreconciled and combinations of
+        // As a set of records,
+        // an array of acct,amt duple's
+        // A total
     }
 }

@@ -7,72 +7,84 @@ using NUnit;
 namespace edhapTests
 {
     public class transactionsTest {
-        Transactions testObj;
-        Accounts Acct;
-        AccountGroup AcctGrp;
-        
+        Transactions testObjPop;
+        Transactions testObjBlank;
+        Accounts AcctPop;
+        Accounts AcctBlank;
+        AccountGroup AcctGrpPop;
+        AccountGroup AcctGrpBlank;
+
         [SetUp]
         public void Setup()
         {
-            db databaseObj = new db("test.xml");
-            AcctGrp = new AccountGroup(databaseObj);
-            Acct = new Accounts(databaseObj, AcctGrp);
-            testObj = new Transactions(databaseObj,Acct);
-            /*
-            AcctGrp.createAcctGrp("test",-1,false);
-            AcctGrp.createAcctGrp("test",-1,true);
-            Acct.addAcct("test budget", 0, false);
-            Acct.addAcct("test real", 1, true);
-            */
+            db databaseObjPop = new db("test.xml");
+            AcctGrpPop = new AccountGroup(databaseObjPop);
+            AcctPop = new Accounts(databaseObjPop, AcctGrpPop);
+            testObjPop = new Transactions(databaseObjPop,AcctPop);
+
+            db databaseObjBlank = new db();
+            AcctGrpBlank = new AccountGroup(databaseObjBlank);
+            AcctBlank = new Accounts(databaseObjBlank, AcctGrpBlank);
+            testObjBlank = new Transactions(databaseObjBlank,AcctBlank);
+
         }
 
         [Test]
         public void transactionsConfigTest()
         {
-            db databaseObj = new db();
-            AccountGroup AcctGrp = new AccountGroup(databaseObj);
-            Accounts Acct = new Accounts(databaseObj, AcctGrp);
-            Transactions Trans = new Transactions(databaseObj,Acct);
-
             // Initializes blank worked
-            Assert.NotNull(Trans, "Transaction table initialized");
+            Assert.NotNull(testObjPop, "Populated Data Transaction table initialized");
+            Assert.NotNull(testObjBlank, "Empty data Transaction table initialized");
             // Table counts should all be 0
-            Assert.AreEqual(0, Trans.Count(), "Transaction table expected count 0 initalized with data");
+            Assert.AreEqual(0, testObjBlank.Count(), "Transaction table expected count 0 initalized with data");
+        }
 
-            //databaseObj = null;
-            //databaseObj = new db("unittest.xml");
-            //Trans = new Transactions(databaseObj,Acct);
-            // Will anticipate about a score of transactions for testing at this point
-            //Assert.AreEqual(20, Trans.Count(), "Transaction table expected count 0 initalized with data");
+        [Test]
+        public void transacts_CountTest() {
+            // Should definitely verify the count() function works.
+
+            // It's difficult to get a null return, only test code  which count make this fail threw exceptions everywhere anyway
+            Assert.NotNull(testObjBlank.Count(),"Transaction.Count() returned a null value"); // This should be impossible, int return type, int is not nullable
+
+            Assert.Zero(testObjBlank.Count(),"Empty dataset transactions.Count() returned non-zero");
+            Assert.Positive(testObjPop.Count(),"Populated transactions.Count() returned <1");
         }
 
         [Test]
         public void transactions_addTransTest() {
-            // Testing that a transaction is added
-            // Do a get on a new blank, then set, then another get on that id and check for accuracy
-            // Check that transaction count is prior, now +1
+            // Testing transaction add success and validation correctness
+            // All tests for validation correctness need to test where acct1 and acct2 are swapped. This should always be the same success/fail status.
 
-            // Lets do an overload to 
-            testObj.addTrans(0,1,10.00,21001);
-            DataRow testRow = testObj.getTrans(0);
+            Int64 testVal = 0;
+            Transactions testObj = testObjPop; // For these tests only using the populated dataset. Accounts required for transactions to succeed.
+            Assert.NotNull(testObjBlank.getTrans(0),"getTrans on blank dataset returned null, should always return a row");
+            Assert.NotNull(testObjBlank.getTrans(0),"getTrans on populated dataset returned null, should always return a row");
 
-            int transCount = testObj.Count();
+            testVal = testObj.Count();
             //Graceful fail on invalid account id's?
-            Assert.True((testObj.addTrans(0,-1,10.00,21001) == -1),"Did not graceful and correctly fail add trans invalid acct");
-            Assert.AreEqual(transCount,testObj.Count(),"Add transaction failed but count increased");
+            Assert.True((testObj.addTrans(0,-1,10.00,21001) == -1),"Did not graceful reject add trans with invalid acct (v1)");
+            Assert.True((testObj.addTrans(-1,0,10.00,21001) == -1),"Did not graceful reject add trans with invalid acct(v2)");
+            Assert.True((testObj.addTrans(-1,-1,10.00,21001) == -1),"Did not graceful reject add trans with invalid acct(v3)");
+            Assert.AreEqual(testVal,testObj.Count(),"Add transaction failed but count increased");
+            // Should also fail if accounts are the same
+            Assert.AreEqual(-1,testObj.addTrans(0,0,10.00,21001),"Did not reject transaction where accounts match");
+            // And should fail is accounts are same budget/type
+            // 0 is false, 1 true, 2 true, 3 false, Accounts must be cross-type, a true and a false
+            Assert.AreEqual(-1,testObj.addTrans(1,2,10.00,21001),"Did not reject transaction where account types match (v1)");
+            Assert.AreEqual(-1,testObj.addTrans(0,3,10.00,21001),"Did not reject transaction where account types match (v2)");
+            Assert.AreEqual(-1,testObj.addTrans(2,1,10.00,21001),"Did not reject transaction where account types match (v3)");
+            Assert.AreEqual(-1,testObj.addTrans(3,0,10.00,21001),"Did not reject transaction where account types match (v4)");
+
+ 
 
 
             // Fails! Invalid accounts?
-            Int64 testVal = testObj.addTrans(0,1,10.00,21001); // Testval is transid
-            Assert.True((testVal > ((Int64) (-1))),"Valid add failed: " + testVal);
-            Assert.AreEqual((transCount + 1),testObj.Count(),"Add transaction succeeded but count changed by more than +1");
+            Assert.True((testObj.addTrans(0,1,10.00,21001) > ((Int64) (-1))),"Valid add failed");
+            Assert.AreEqual((testVal + 1),testObj.Count(),"Add transaction succeeded but count changed by more than +1");
         }
 
         // Basic testing
         // A table is created, has correct rows
-        // On creation, table is empty
-        // On call to add transaction table contains +1 rows (when returning true)
-        // On call tao add transaction table contains +0 rows (when returning false)
         // On call to add transaction table, fails when invalid conditions given (accounts incorrect, date invalid?)
         // Incorrect accounts form would be 2 accounts with same budget/real value.
         // Otherwise if accounts are different types then should correct these and be +1 rows
