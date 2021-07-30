@@ -133,5 +133,14 @@ namespace edhap
             account["Balance"] = bal;
             setAcct(account);
         }
+
+        public Double getWorkingBal(Int64 acct) {
+            System.Console.WriteLine("Account working balance: " + AcctTable.Rows.Find(new Object[] { acct } )["WorkingBal"].ToString());
+            return Double.Parse(AcctTable.Rows.Find(new Object[] { acct } )["WorkingBal"].ToString());
+        }
+        public Double getCurBal(Int64 acct) {
+            System.Console.WriteLine("Account current balance: " + AcctTable.Rows.Find(new Object[] { acct } )["Balance"].ToString());
+            return Double.Parse(AcctTable.Rows.Find(new Object[] { acct } )["Balance"].ToString());
+        }
     }
 }

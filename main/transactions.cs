@@ -6,6 +6,7 @@ using System.IO.Compression;
 namespace edhap
 {
     public class Transactions {
+        // TODO: Change all 'acct' method signatures to queryacct to avoid possible conflict with Accounts acct
         private DataTable TransTable = null;
         private Accounts acct = null;
         private db DBase;
@@ -136,12 +137,67 @@ namespace edhap
             return retVal;
         }
 
+        public double sumTrans(Int64 queryacct, Int64 startDt = 0, Int64 endDt = 0, Boolean cleared = false) {
+            // Same song next verse, select is the only thing that changes. Maybe worth moving that out to another bit of code and using these to wrap it and not duplicate out the math.
+            Double balance = 0.00;
+            try {
+                //System.Console.WriteLine("Calling transaction lookup with values: " + queryacct + " : " + startDt + " : " + endDt);
+                DataRow[] transactionSet = getTransbyAcctDt(queryacct, cleared, startDt, endDt); 
+                if (transactionSet != null) { 
+                    foreach (DataRow trans in transactionSet) {
+                        balance = balance + ((bool) trans["direction"] == true ? Double.Parse(trans["Amount"].ToString()) : (-1 * Double.Parse(trans["amount"].ToString())));
+                        //System.Console.WriteLine("transId, Amount: " + trans["transId"].ToString() + " " + trans["Amount"].ToString());
+                    } 
+                }
+                //else { System.Console.WriteLine("Query returned null set with values: " + queryacct); }
+            } catch (Exception e) {
+                System.Console.WriteLine("Data set query through sumTrans returned a null set which was not pre-checked");
+                System.Console.WriteLine("Error: " + e.Message);
+            }
+            //System.Console.WriteLine("Called transaction lookup with values: " + queryacct + " : " + startDt + " : " + endDt);
+            //System.Console.WriteLine("Summation: " + balance);
+            return balance;
+        }
+
+        // Wrap another way to call sumTrans
+        public double sumTrans(Int64 queryacct,Boolean cleared, Int64 startDt = 0, Int64 endDt = 0) {
+            return sumTrans(queryacct,startDt,endDt,cleared);
+        }
+
+        public DataRow[] getTransbyAcctDt(Int64 queryacct, Boolean cleared, Int64 startDt, Int64 endDt) {
+            String Query = "";
+            //System.Console.WriteLine("Starting query with values: " + queryacct + " : " + startDt + " : " + endDt);
+            DataRow[] transactionSet = null;
+            // Do a quick lookup on the acct to figure out if it is going to be real or budget.
+            if (acct.getBudget(queryacct) == true) {
+                Query = "budgetacct = " + queryacct.ToString();
+            } else {
+                Query = "realacct = " + queryacct.ToString();
+            }
+            if (startDt != 0) {
+                Query += " and Date >= "  + startDt.ToString();
+            }
+            if (endDt != 0) {
+                Query += " and Date <= "  + endDt.ToString();
+            }
+            if (cleared == (Boolean) true) {
+                Query += " and cleared = true";
+            }
+            //System.Console.WriteLine(Query);
+            transactionSet = getTransTbl().Select(Query);
+            return transactionSet;
+        }
+
         // Will want get/sets for all the columns
         // Also a zero out record would be nice for debugging
+        // A method for setting a value across multiple records. Maybe a template linq function to set all <field> - <value> on DataRow[].
+        // Or maybe just a simple iterate over set.
 
         // Want a method for getting transactions for a specific account, through a date range, account/unbalanced or unreconciled and combinations of
         // As a set of records,
         // an array of acct,amt duple's
         // A total
+
+
     }
 }
