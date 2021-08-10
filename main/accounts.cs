@@ -40,15 +40,15 @@ namespace edhap
                     AcctTable.Columns.Add(DBase.newCol("Name","String"));
                     AcctTable.Columns.Add(DBase.newCol("budget","Boolean")); // Boolean, budget or real acct
                     AcctTable.Columns.Add(DBase.newCol("Tracking","Boolean"));
-                    AcctTable.Columns.Add(DBase.newCol("Balance","Double"));
+                    AcctTable.Columns.Add(DBase.newCol("ClrBal","Double"));
                     AcctTable.Columns.Add(DBase.newCol("WorkingBal","Double"));
+                    AcctTable.Columns.Add(DBase.newCol("ReconBal","Double"));
                     AcctTable.Columns.Add(DBase.newCol("parent","Int64")); // Ties to an acctgrptbl row
                     AcctTable.Columns.Add(DBase.newCol("Comment","String"));
                     AcctTable.Columns.Add(DBase.newCol("Carryover","Double"));
                     AcctTable.Columns.Add(DBase.newCol("LastUpdate","Int64")); // yy-julian date  indicating last time this account was processed, for catch up purposes.
                     // These values are used for budget accounts only
-                    AcctTable.Columns.Add(DBase.newCol("clrBal","Double")); 
-                    AcctTable.Columns.Add(DBase.newCol("avlBal","Double"));
+                    AcctTable.Columns.Add(DBase.newCol("avlBal","Double")); // Remainder of the budget amount which updates from the windowbudget or monthbudget
                     AcctTable.Columns.Add(DBase.newCol("windowBudget","Double"));
                     AcctTable.Columns.Add(DBase.newCol("monthBudget","Double"));
                     AcctTable.Columns.Add(DBase.newCol("perdiem","Boolean"));
@@ -82,6 +82,11 @@ namespace edhap
         public DataRow getAcct(Int64 AcctId = -1) {
             // Returns a new blank row with the correct columns
             return DBase.getRow("accounts",AcctId);
+        }
+
+        public DataRow[] getAccts() {
+            // Returns a new blank row with the correct columns
+            return AcctTable.Select();
         }
 
         public Boolean setAcct(DataRow Account) {
@@ -128,9 +133,19 @@ namespace edhap
             // All balances are positive, direction true = + else -
             DataRow account = AcctTable.NewRow();
             account = getAcct(acct);
-            Double bal = Double.Parse(account["Balance"].ToString());
+            Double bal = Double.Parse(account["ClrBal"].ToString());
             bal += (direction == (Boolean) true) ? balance : balance * -1;
-            account["Balance"] = bal;
+            account["ClrBal"] = bal;
+            setAcct(account);
+        }
+
+        public void updateReconBal(Int64 acct, Double balance, Boolean direction) {
+            // All balances are positive, direction true = + else -
+            DataRow account = AcctTable.NewRow();
+            account = getAcct(acct);
+            Double bal = Double.Parse(account["ReconBal"].ToString());
+            bal += (direction == (Boolean) true) ? balance : balance * -1;
+            account["ReconBal"] = bal;
             setAcct(account);
         }
 
@@ -139,8 +154,8 @@ namespace edhap
             return Double.Parse(AcctTable.Rows.Find(new Object[] { acct } )["WorkingBal"].ToString());
         }
         public Double getCurBal(Int64 acct) {
-            System.Console.WriteLine("Account current balance: " + AcctTable.Rows.Find(new Object[] { acct } )["Balance"].ToString());
-            return Double.Parse(AcctTable.Rows.Find(new Object[] { acct } )["Balance"].ToString());
+            System.Console.WriteLine("Account current balance: " + AcctTable.Rows.Find(new Object[] { acct } )["ClrBal"].ToString());
+            return Double.Parse(AcctTable.Rows.Find(new Object[] { acct } )["ClrBal"].ToString());
         }
     }
 }

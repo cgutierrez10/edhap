@@ -43,6 +43,7 @@ namespace edhap
                     TransTable.Columns.Add(DBase.newCol("Direction","Boolean"));
                     TransTable.Columns.Add(DBase.newCol("Cleared","Boolean"));
                     TransTable.Columns.Add(DBase.newCol("Reconciled","Boolean"));
+                    TransTable.Columns.Add(DBase.newCol("process","Int64")); // Process stages, start at 0 not added to balance, 1 cleared, 2 reconciled to prevent reprocessing/adding?
                     TransTable.Columns.Add(DBase.newCol("Hidden","Boolean")); // Used by budget accounts
                     TransTable.Columns.Add(DBase.newCol("Memo","String"));
                     TransTable.Columns.Add(DBase.newCol("Date","Int64")); // Same as yy-julan date to be used above
@@ -66,7 +67,7 @@ namespace edhap
             Transrow["payeeId"] = -1; // This will be linked later
             Transrow["Amount"] = amt < 0 ? (amt * -1) : amt;
             Transrow["direction"] = amt < 0 ? false : true; // If amount is positive then true else false, positive = + to account balance
-            Transrow["Date"] = 20001; // Same Jan 1st yy-julian blank value
+            Transrow["Date"] = dt; // Same Jan 1st yy-julian blank value
             if (acct.getBudget(acct1) == acct.getBudget(acct2)) {
                 return -1;
             }
@@ -137,9 +138,11 @@ namespace edhap
             return retVal;
         }
 
+        /*
         public double sumTrans(Int64 queryacct, Int64 startDt = 0, Int64 endDt = 0, Boolean cleared = false) {
             // Same song next verse, select is the only thing that changes. Maybe worth moving that out to another bit of code and using these to wrap it and not duplicate out the math.
             Double balance = 0.00;
+            // Maybe just update all 3 balances by the cleared/recon flags in
             try {
                 //System.Console.WriteLine("Calling transaction lookup with values: " + queryacct + " : " + startDt + " : " + endDt);
                 DataRow[] transactionSet = getTransbyAcctDt(queryacct, cleared, startDt, endDt); 
@@ -156,6 +159,70 @@ namespace edhap
             }
             //System.Console.WriteLine("Called transaction lookup with values: " + queryacct + " : " + startDt + " : " + endDt);
             //System.Console.WriteLine("Summation: " + balance);
+            return balance;
+        }*/
+
+        // Will this ever need the cleared only flag? Would risk accidentally re-counting?
+        public double sumTrans(Int64 queryacct, Int64 startDt = 0, Int64 endDt = 0, Boolean cleared = false) {
+            // Same song next verse, select is the only thing that changes. Maybe worth moving that out to another bit of code and using these to wrap it and not duplicate out the math.
+            Double balance = 0.00;
+            Double clrbal = 0.00;
+            Double reconbal = 0.00;
+            Double amt = 0.00;
+            Int64 process = 0;
+            bool clradd = false;
+            bool reconadd = false;
+            DataRow Account = acct.getAcct(queryacct);
+            // Maybe just update all 3 balances by the cleared/recon flags in one go?
+            try {
+                //System.Console.WriteLine("Calling transaction lookup with values: " + queryacct + " : " + startDt + " : " + endDt);
+                DataRow[] transactionSet = getTransbyAcctDt(queryacct, cleared, startDt, endDt); 
+                if (transactionSet != null) { 
+                    foreach (DataRow trans in transactionSet) {
+                        Int64.TryParse(trans["process"].ToString(), out process);
+                        if (   process == 2 || process == 3 
+                            || process == 6 || process == 7) { clradd = true; }
+                        if (process > 3) { reconadd = true; }
+                        Double.TryParse(trans["Amount"].ToString(), out amt);
+                        amt = AmttoBal(amt,(bool) trans["direction"]);
+                        // Leaving all these comments through the next commit so they exist for later reference in the git repo.
+                        // Status codes octal binary flags 1, 2, 4. only invalid code is 0b101
+                        // 1 == balance
+                        // 2 == clrbal
+                        // 3 == balance + clrbal
+                        // 4 == reconbal
+                        // 5 == reconbal + balance (Should never occur! Never a state where reconbal but not cleared)
+                        // 6 == reconbal + clrbal
+                        // 7 == reconbal + balance + clrbal 
+                        if (process <= 0) { process = 1; trans["process"] = 1; } // Once this is called it will at the least be in the balance
+                        // This if could also include process code 5 but that is the invalid one
+                        balance = (process == 1 || process == 3 || process == 7) ? balance + amt : balance;
+                        // Never pulling from balance, removal gets problematic for history
+                        // If cleared is true and clradd is true, do nothing
+                        // If cleared is false and clradd is true, remove
+                        // If cleared is true and clradd is false, add
+                        // False false then do nothing.
+                        if ((bool) trans["Cleared"] != clradd) {
+                            // Add or remove, if cleared then add, else subtract
+                            clrbal = clradd ? clrbal + amt : clrbal - amt;    
+                        }
+                        if ((bool) trans["Reconciled"] != reconadd) {
+                            // Add or remove, if cleared then add, else subtract
+                            reconbal = reconadd ? reconbal + amt : reconbal - amt;    
+                        }
+                        //System.Console.WriteLine("transId, Amount: " + trans["transId"].ToString() + " " + trans["Amount"].ToString());
+                    } 
+                }
+                //else { System.Console.WriteLine("Query returned null set with values: " + queryacct); }
+            } catch (Exception e) {
+                System.Console.WriteLine("Data set query through sumTrans returned a null set which was not pre-checked");
+                System.Console.WriteLine("Error: " + e.Message);
+            }
+            acct.updateCurBal(queryacct,amt,AmtDir(amt));
+            acct.updateWorkBal(queryacct,amt,AmtDir(amt));
+            acct.updateReconBal(queryacct,amt,AmtDir(amt));
+            System.Console.WriteLine("Called transaction lookup with values: " + queryacct + " : " + startDt + " : " + endDt);
+            System.Console.WriteLine("Summation: " + balance);
             return balance;
         }
 
@@ -187,7 +254,36 @@ namespace edhap
             transactionSet = getTransTbl().Select(Query);
             return transactionSet;
         }
+        public DataRow[] getTransSet() {
+            // Returns a new blank row with the correct columns
+            return TransTable.Select();
+        }
 
+        // Small snag, if set to cleared, and amount has updated then this needs to be removed from the account
+        // Maybe a situation where cleared == false and process is 2,3,6,7 then subtract from clramt?
+        // Skip the process codes here, the transaction summation can check flag against process, if process code != flag then add or subtract as correct.
+        public void setCleared(Int64 transId, Boolean stat = true) {
+            DataRow transaction = getTrans(transId);
+            transaction["Cleared"] = stat;
+            setTrans(transaction);
+        }
+
+        public void setReconciled(Int64 transId, Boolean stat = true) {
+            DataRow transaction = getTrans(transId);
+            if ((bool) transaction["Cleared"] || !(stat)) {
+                transaction["Reconciled"] = stat;
+                setTrans(transaction);
+            }
+        }
+
+        // Pair of helper functions, direction isn't strictly necessary 
+        private Double AmttoBal(Double amt, Boolean direction) {
+            return ((bool) direction == true ? amt : (-1 * amt));
+        }
+
+        private Boolean AmtDir(Double amt) {
+            return amt < 0 ? true : false;
+        }
         // Will want get/sets for all the columns
         // Also a zero out record would be nice for debugging
         // A method for setting a value across multiple records. Maybe a template linq function to set all <field> - <value> on DataRow[].

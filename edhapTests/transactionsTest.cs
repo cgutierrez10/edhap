@@ -68,11 +68,11 @@ namespace edhapTests
             // Should also fail if accounts are the same
             Assert.AreEqual(-1,testObj.addTrans(0,0,10.00,2020001),"Did not reject transaction where accounts match");
             // And should fail is accounts are same budget/type
-            // 0 is false, 1 true, 2 true, 3 false, Accounts must be cross-type, a true and a false
-            Assert.AreEqual(-1,testObj.addTrans(1,2,10.00,2020001),"Did not reject transaction where account types match (v1)");
-            Assert.AreEqual(-1,testObj.addTrans(0,3,10.00,2020001),"Did not reject transaction where account types match (v2)");
-            Assert.AreEqual(-1,testObj.addTrans(2,1,10.00,2020001),"Did not reject transaction where account types match (v3)");
-            Assert.AreEqual(-1,testObj.addTrans(3,0,10.00,2020001),"Did not reject transaction where account types match (v4)");
+            // 0 is false, 1 true, 2 false, 3 true, Accounts must be cross-type, a true and a false
+            Assert.AreEqual(-1,testObj.addTrans(1,3,10.00,2020001),"Did not reject transaction where account types match (v1)");
+            Assert.AreEqual(-1,testObj.addTrans(0,2,10.00,2020001),"Did not reject transaction where account types match (v2)");
+            Assert.AreEqual(-1,testObj.addTrans(2,2,10.00,2020001),"Did not reject transaction where account types match (v3)");
+            Assert.AreEqual(-1,testObj.addTrans(3,1,10.00,2020001),"Did not reject transaction where account types match (v4)");
 
             // Should be Fails! Invalid accounts
             Assert.True((testObj.addTrans(0,1,10.00,20001) > ((Int64) (-1))),"Valid add failed");
@@ -97,13 +97,20 @@ namespace edhapTests
             
             //Account test data at present returns values of 2.55 (since they are binary based increments and I used 8 of them)
             // Can write tests that use account working balance against summation for 'whole data' sum tests
-            Assert.AreEqual(AcctPop.getWorkingBal(0),testObjPop.sumTrans(0),0.000001,"Balance from whole history sum did not match account expected (v2)");
-            Assert.AreEqual(AcctPop.getCurBal(0),testObjPop.sumTrans(0,((Boolean) true)),0.000001,"Balance from whole history sum did not match account expected (v1)");
+            // These two broke with changes to sumTrans(). Balance return is only previously unadded transactions no longer a total of those accounts
+            //Assert.AreEqual(AcctPop.getWorkingBal(0),testObjPop.sumTrans(0),0.000001,"Balance from whole history sum did not match account expected (v2)");
+            //Assert.AreEqual(AcctPop.getCurBal(0),testObjPop.sumTrans(0,((Boolean) true)),0.000001,"Balance from whole history sum did not match account expected (v1)");
 
             // Data set needs transactions which have forward and backward directions
             // Data set needs transactions which link across multiple different accounts
             // Data set needs transactions which are/not cleared
             // Data set needs transactions which are/not reconciled
+
+            // This gets more involved with the set cleared and reconciled. Now have to validate 3 balances and also check the conditions.
+            // Set cleared, run update, check cleared bal and workingbal
+            // Set reconciled, run update, check cleared, reconciled and workingbal
+            // Reconciled should perhaps validate against cleared? aka, uncleared does not go to reconciled.
+
         }
 
     }
