@@ -13,11 +13,12 @@ namespace edhapTests
         Accounts AcctBlank;
         AccountGroup AcctGrpPop;
         AccountGroup AcctGrpBlank;
-
+        db databaseObjPop;
+            // Noticed the output file is creating new accounts somehow?
         [SetUp]
         public void Setup()
         {
-            db databaseObjPop = new db("test.xml");
+            databaseObjPop = new db("test.xml");
             AcctGrpPop = new AccountGroup(databaseObjPop);
             AcctPop = new Accounts(databaseObjPop, AcctGrpPop);
             testObjPop = new Transactions(databaseObjPop,AcctPop);
@@ -26,7 +27,6 @@ namespace edhapTests
             AcctGrpBlank = new AccountGroup(databaseObjBlank);
             AcctBlank = new Accounts(databaseObjBlank, AcctGrpBlank);
             testObjBlank = new Transactions(databaseObjBlank,AcctBlank);
-
         }
 
         [Test]
@@ -47,6 +47,7 @@ namespace edhapTests
             Assert.NotNull(testObjBlank.Count(),"Transaction.Count() returned a null value"); // This should be impossible, int return type, int is not nullable
             Assert.Zero(testObjBlank.Count(),"Empty dataset transactions.Count() returned non-zero");
             Assert.Positive(testObjPop.Count(),"Populated transactions.Count() returned <1");
+
         }
 
         [Test]
@@ -77,6 +78,7 @@ namespace edhapTests
             // Should be Fails! Invalid accounts
             Assert.True((testObj.addTrans(0,1,10.00,20001) > ((Int64) (-1))),"Valid add failed");
             Assert.AreEqual((testVal + 1),testObj.Count(),"Add transaction succeeded but count changed by more than +1");
+            Assert.Fail();
         }
 
         [Test]
@@ -89,10 +91,17 @@ namespace edhapTests
             // Is the right thing here return a result set, or resturning a date/acct/amt set and having reconcilliation handle the account balances?
             // This is a hobby project, lets not overthink it and if I rewrite I rewrite.
             Assert.Zero(testObjBlank.sumTrans(0,2020002,2020002),"Transaction sum from date to date expecting 0 returned not zero (v1)");
+                        //System.Console.WriteLine("Account counter: " + AcctPop.getAcctTbl().Rows.Count);
             Assert.NotZero(testObjPop.sumTrans(0),"Transaction sum returned 0.00");
+                        System.Console.WriteLine("Account counter: " + AcctPop.getAcctTbl().Rows.Count);
+            // This test is causing the system to add 3 accounts. No other call seems to be a problem?
+            // Wierd strange thing, added another check to avoid the issue but something feels off about this edge case problem.
             Assert.Zero(testObjPop.sumTrans(-1),"Transaction sum on invalid account should be 0.00"); // Invalid account may cause internal querying to fail
+                        //System.Console.WriteLine("Account counter: " + AcctPop.getAcctTbl().Rows.Count);
             Assert.NotZero(testObjPop.sumTrans(0,2020001),"Transaction sum from date returned 0.00");
+                        //System.Console.WriteLine("Account counter: " + AcctPop.getAcctTbl().Rows.Count);
             Assert.Zero(testObjPop.sumTrans(0,2020002,2020002),"Transaction sum from date to date expecting 0 returned not zero (v2)");
+                        //System.Console.WriteLine("Account counter: " + AcctPop.getAcctTbl().Rows.Count);
             Assert.NotZero(testObjPop.sumTrans(0,2020001,2020005),"Transaction sum from date to date returned 0.00");
             
             //Account test data at present returns values of 2.55 (since they are binary based increments and I used 8 of them)
@@ -110,7 +119,9 @@ namespace edhapTests
             // Set cleared, run update, check cleared bal and workingbal
             // Set reconciled, run update, check cleared, reconciled and workingbal
             // Reconciled should perhaps validate against cleared? aka, uncleared does not go to reconciled.
-
+            databaseObjPop.saveDb("post-process.xml");
+            System.Console.WriteLine("Account counter: " + AcctPop.getAcctTbl().Rows.Count);
+            Assert.Fail();
         }
 
     }

@@ -114,7 +114,7 @@ namespace edhap
                 }
             }    
             else {
-                _db.WriteXml("test.xml", XmlWriteMode.WriteSchema);
+                _db.WriteXml(writeFile, XmlWriteMode.WriteSchema);
             }   
             return true;
         }

@@ -68,6 +68,8 @@ namespace edhap
             Transrow["Amount"] = amt < 0 ? (amt * -1) : amt;
             Transrow["direction"] = amt < 0 ? false : true; // If amount is positive then true else false, positive = + to account balance
             Transrow["Date"] = dt; // Same Jan 1st yy-julian blank value
+            
+            //System.Console.WriteLine("Pre-budget check: " + acct.getAcctTbl().Rows.Count + "\n");
             if (acct.getBudget(acct1) == acct.getBudget(acct2)) {
                 return -1;
             }
@@ -78,6 +80,7 @@ namespace edhap
                 Transrow["Budgetacct"] = acct2;
                 Transrow["Realacct"] = acct1;
             }
+            //System.Console.WriteLine("Post-budget checks: " + acct.getAcctTbl().Rows.Count + "\n");
             if (setTrans(Transrow))
             {
                 TransTable.AcceptChanges();
@@ -87,6 +90,7 @@ namespace edhap
                 TransTable.RejectChanges();
                 return -1;
             }
+
         }
 
         public DataRow getTrans(Int64 TransId = -1) {
@@ -172,7 +176,9 @@ namespace edhap
             Int64 process = 0;
             bool clradd = false;
             bool reconadd = false;
+            if (acct.existsAcct(queryacct) == true ) {
             DataRow Account = acct.getAcct(queryacct);
+            } else { return 0.00; }
             // Maybe just update all 3 balances by the cleared/recon flags in one go?
             try {
                 //System.Console.WriteLine("Calling transaction lookup with values: " + queryacct + " : " + startDt + " : " + endDt);

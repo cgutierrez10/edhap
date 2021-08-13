@@ -79,6 +79,11 @@ namespace edhap
             return setAcct(acctrow);
         }
 
+        public bool existsAcct(Int64 AcctId = -1) {
+            if (AcctTable.Rows.Find(new Object[] { AcctId } ) == null ) { return false; }
+            return true;
+        }
+
         public DataRow getAcct(Int64 AcctId = -1) {
             // Returns a new blank row with the correct columns
             return DBase.getRow("accounts",AcctId);
